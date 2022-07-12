@@ -41,8 +41,17 @@ class VcrAdapter extends Mock implements HttpClientAdapter {
     return File(finalPath);
   }
 
+  @override
+  Future<ResponseBody> fetch(RequestOptions? options,
+          Stream<Uint8List>? requestStream, Future<void>? cancelFuture) =>
+      // ignore: invalid_use_of_visible_for_testing_member
+      super.noSuchMethod(
+              Invocation.method(#fetch, [options, requestStream, cancelFuture]),
+              returnValue: Future.value(ResponseBody(Stream.empty(), null)))
+          as Future<ResponseBody>;
+
   void makeMockRequestWithAdapter(File file) {
-    when(fetch(any as RequestOptions, any, any)).thenAnswer((invocation) async {
+    when(fetch(any, any, any)).thenAnswer((invocation) async {
       List<dynamic> arguments = invocation.positionalArguments;
       return makeMockRequest(file, arguments[0] as RequestOptions,
           arguments[1] as Stream<List<int>>, arguments[2] as Future);
@@ -50,28 +59,28 @@ class VcrAdapter extends Mock implements HttpClientAdapter {
   }
 
   void makeNormalRequestWithAdapter(File file) {
-    when(fetch(any as RequestOptions, any, any)).thenAnswer((invocation) async {
+    when(fetch(any, any, any)).thenAnswer((invocation) async {
       List<dynamic> arguments = invocation.positionalArguments;
       if (file.existsSync()) {
         return makeMockRequest(file, arguments[0] as RequestOptions,
-            arguments[1] as Stream<List<int>>, arguments[2] as Future);
+            arguments[1] as Stream<List<int>>?, arguments[2] as Future?);
       }
 
       return makeNormalRequest(file, arguments[0] as RequestOptions,
-          arguments[1] as Stream<List<int>>, arguments[2] as Future);
+          arguments[1] as Stream<List<int>>?, arguments[2] as Future?);
     });
   }
 
   Future<ResponseBody> makeNormalRequest(
     File file,
     RequestOptions options,
-    Stream<List<int>> requestStream,
-    Future<void> cancelFuture,
+    Stream<List<int>>? requestStream,
+    Future<void>? cancelFuture,
   ) async {
     final adapter = DefaultHttpClientAdapter();
 
     ResponseBody responseBody = await adapter.fetch(
-        options, requestStream.map(Uint8List.fromList), cancelFuture);
+        options, requestStream?.map(Uint8List.fromList), cancelFuture);
 
     final status = responseBody.statusCode;
 
@@ -91,8 +100,8 @@ class VcrAdapter extends Mock implements HttpClientAdapter {
   Future<ResponseBody> makeMockRequest(
     File file,
     RequestOptions options,
-    Stream<List<int>> requestStream,
-    Future<void> cancelFuture,
+    Stream<List<int>>? requestStream,
+    Future<void>? cancelFuture,
   ) async {
     Cassette data = await _matchRequest(options.uri, file, orElse: () async {
       await makeNormalRequest(file, options, requestStream, cancelFuture);
@@ -126,8 +135,8 @@ class VcrAdapter extends Mock implements HttpClientAdapter {
 
   List<Cassette> _readFile(File file) {
     String jsonString = file.readAsStringSync();
-    return (json.decode(jsonString) as List<Map<String, dynamic>>)
-        .map(Cassette.fromJson)
+    return (json.decode(jsonString) as List)
+        .map((json)=>Cassette.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 

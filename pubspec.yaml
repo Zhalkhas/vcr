@@ -9,8 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  mockito: ^4.1.1
-  dio: ^3.0.4
+  mockito: ^5.2.0
+  dio: ^4.0.6
 
 dev_dependencies:
   flutter_test:

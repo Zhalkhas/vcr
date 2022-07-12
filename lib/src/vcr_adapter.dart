@@ -15,8 +15,6 @@ const dioHttpHeadersForResponseBody = {
 };
 
 class VcrAdapter extends Mock implements HttpClientAdapter {
-  String basePath = 'test/cassettes';
-
   void useCassette(String path) {
     File file = _loadFile(path);
 
@@ -33,8 +31,7 @@ class VcrAdapter extends Mock implements HttpClientAdapter {
       path = "$path.json";
     }
     Directory current = Directory.current;
-    String finalPath =
-        current.path.endsWith('/test') ? current.path : current.path + '/test';
+    String finalPath = current.path;
 
     finalPath = "$finalPath/cassettes/$path";
 
@@ -54,7 +51,7 @@ class VcrAdapter extends Mock implements HttpClientAdapter {
     when(fetch(any, any, any)).thenAnswer((invocation) async {
       List<dynamic> arguments = invocation.positionalArguments;
       return makeMockRequest(file, arguments[0] as RequestOptions,
-          arguments[1] as Stream<List<int>>, arguments[2] as Future);
+          arguments[1] as Stream<List<int>>?, arguments[2] as Future?);
     });
   }
 
@@ -136,7 +133,7 @@ class VcrAdapter extends Mock implements HttpClientAdapter {
   List<Cassette> _readFile(File file) {
     String jsonString = file.readAsStringSync();
     return (json.decode(jsonString) as List)
-        .map((json)=>Cassette.fromJson(json as Map<String, dynamic>))
+        .map((json) => Cassette.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 
